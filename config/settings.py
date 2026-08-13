@@ -38,7 +38,25 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'myapp',
 ]
+
+AUTH_USER_MODEL = 'myapp.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'myapp.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+}
+
+# How long a login OTP stays valid.
+OTP_VALID_MINUTES = 5
+
+# How long an auth token stays valid after verification / refresh.
+TOKEN_VALID_DAYS = 30
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
