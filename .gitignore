@@ -55,4 +55,4 @@ htmlcov/
 .ipynb_checkpoints/
 
 # documnenrs
-./docs 
+docs/
