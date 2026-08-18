@@ -107,10 +107,11 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'documents:library'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
-OPENAI_API_KEY = app_settings.openai_api_key
-OPENAI_EMBEDDING_MODEL = app_settings.openai_embedding_model
-OPENAI_CHAT_MODEL = app_settings.openai_chat_model
-OPENAI_CONFIGURED = app_settings.openai_configured
+OPENROUTER_API_KEY = app_settings.openrouter_api_key
+OPENROUTER_BASE_URL = app_settings.openrouter_base_url
+OPENROUTER_CHAT_MODEL = app_settings.openrouter_chat_model
+OPENROUTER_EMBEDDING_MODEL = app_settings.openrouter_embedding_model
+LLM_CONFIGURED = app_settings.llm_configured
 
 RAG_CHUNK_TOKENS = app_settings.rag_chunk_tokens
 RAG_CHUNK_OVERLAP = app_settings.rag_chunk_overlap
@@ -121,4 +122,4 @@ DEFAULT_THEME = app_settings.default_theme
 THEME_CHOICES = ('light', 'dark', 'ocean', 'forest', 'sunset')
 
 ALLOWED_UPLOAD_EXTENSIONS = {'.pdf', '.txt', '.docx'}
-EMBEDDING_DIMENSIONS = 1536
+EMBEDDING_DIMENSIONS = app_settings.embedding_dimensions

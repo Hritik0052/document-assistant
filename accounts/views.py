@@ -1,11 +1,10 @@
 from asgiref.sync import sync_to_async
-from django.contrib import messages
 from django.contrib.auth import aauthenticate, alogin, alogout
-from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
 from accounts.models import User
 from accounts.schemas import LoginSchema, RegisterSchema
+from core.http import async_redirect, async_render, success_message
 from core.pydantic import FormError, parse_form
 
 
@@ -13,7 +12,7 @@ from core.pydantic import FormError, parse_form
 async def register(request):
     user = await request.auser()
     if user.is_authenticated:
-        return redirect('documents:library')
+        return await async_redirect('documents:library')
 
     errors = {}
     form_data = {}
@@ -35,10 +34,10 @@ async def register(request):
                     password=payload.password,
                 )
                 await alogin(request, new_user)
-                messages.success(request, 'Welcome aboard. Upload a document to start asking questions.')
-                return redirect('documents:library')
+                await success_message(request, 'Welcome aboard. Upload a document to start asking questions.')
+                return await async_redirect('documents:library')
 
-    return render(request, 'accounts/register.html', {
+    return await async_render(request, 'accounts/register.html', {
         'errors': errors,
         'form_data': form_data,
     })
@@ -48,7 +47,7 @@ async def register(request):
 async def login_view(request):
     user = await request.auser()
     if user.is_authenticated:
-        return redirect('documents:library')
+        return await async_redirect('documents:library')
 
     errors = {}
     form_data = {}
@@ -70,9 +69,9 @@ async def login_view(request):
                 errors['form'] = 'This account is disabled.'
             else:
                 await alogin(request, authenticated)
-                return redirect('documents:library')
+                return await async_redirect('documents:library')
 
-    return render(request, 'accounts/login.html', {
+    return await async_render(request, 'accounts/login.html', {
         'errors': errors,
         'form_data': form_data,
     })
@@ -81,5 +80,5 @@ async def login_view(request):
 @require_http_methods(['POST'])
 async def logout_view(request):
     await alogout(request)
-    messages.success(request, 'You have been signed out.')
-    return redirect('accounts:login')
+    await success_message(request, 'You have been signed out.')
+    return await async_redirect('accounts:login')

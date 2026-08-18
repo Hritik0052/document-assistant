@@ -3,14 +3,13 @@ from pathlib import Path
 
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.contrib import messages
 from django.db import connections
 from django.http import HttpResponse
-from django.shortcuts import aget_object_or_404, redirect, render
-from django.template.loader import render_to_string
+from django.shortcuts import aget_object_or_404
 from django.views.decorators.http import require_http_methods
 
 from core.auth import async_login_required
+from core.http import async_redirect, async_render, async_render_to_string, error_message, success_message
 from core.pydantic import FormError, parse_form
 from documents.models import Conversation, Document, Message
 from documents.schemas import AskSchema
@@ -33,7 +32,7 @@ def _start_ingest(document_id: int) -> None:
 async def library(request):
     user = await request.auser()
     docs = [doc async for doc in Document.objects.filter(user=user)]
-    return render(request, 'documents/library.html', {'documents': docs})
+    return await async_render(request, 'documents/library.html', {'documents': docs})
 
 
 @async_login_required
@@ -42,18 +41,18 @@ async def upload(request):
     user = await request.auser()
     uploaded = request.FILES.get('file')
     if not uploaded:
-        messages.error(request, 'Choose a PDF, Word, or text file to upload.')
-        return redirect('documents:library')
+        await error_message(request, 'Choose a PDF, Word, or text file to upload.')
+        return await async_redirect('documents:library')
 
     file_type = _file_type_for(uploaded.name)
     if file_type is None:
-        messages.error(request, 'Only .pdf, .txt, and .docx files are supported.')
-        return redirect('documents:library')
+        await error_message(request, 'Only .pdf, .txt, and .docx files are supported.')
+        return await async_redirect('documents:library')
 
     max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
     if uploaded.size > max_bytes:
-        messages.error(request, f'File is too large. Maximum size is {settings.MAX_UPLOAD_MB} MB.')
-        return redirect('documents:library')
+        await error_message(request, f'File is too large. Maximum size is {settings.MAX_UPLOAD_MB} MB.')
+        return await async_redirect('documents:library')
 
     title = Path(uploaded.name).stem
     document = await Document.objects.acreate(
@@ -65,8 +64,8 @@ async def upload(request):
         status=Document.Status.PENDING,
     )
     threading.Thread(target=_start_ingest, args=(document.pk,), daemon=True).start()
-    messages.success(request, f'“{title}” is being processed. You can ask questions once it is ready.')
-    return redirect('documents:chat', pk=document.pk)
+    await success_message(request, f'“{title}” is being processed. You can ask questions once it is ready.')
+    return await async_redirect('documents:chat', pk=document.pk)
 
 
 @async_login_required
@@ -76,7 +75,7 @@ async def chat(request, pk: int):
     conversation, _created = await Conversation.objects.aget_or_create(user=user, document=document)
     history = [message async for message in conversation.messages.all()]
     docs = [doc async for doc in Document.objects.filter(user=user)]
-    return render(request, 'documents/chat.html', {
+    return await async_render(request, 'documents/chat.html', {
         'document': document,
         'documents': docs,
         'conversation': conversation,
@@ -88,7 +87,11 @@ async def chat(request, pk: int):
 async def document_status(request, pk: int):
     user = await request.auser()
     document = await aget_object_or_404(Document.objects.filter(user=user), pk=pk)
-    html = render_to_string('documents/partials/status_badge.html', {'document': document}, request=request)
+    html = await async_render_to_string(
+        'documents/partials/status_badge.html',
+        {'document': document},
+        request=request,
+    )
     response = HttpResponse(html)
     if document.status in {Document.Status.READY, Document.Status.FAILED}:
         response['HX-Refresh'] = 'true'
@@ -107,12 +110,12 @@ async def ask(request, pk: int):
     try:
         payload = parse_form(AskSchema, request.POST)
     except FormError as exc:
-        return render(request, 'documents/partials/ask_error.html', {
+        return await async_render(request, 'documents/partials/ask_error.html', {
             'error': next(iter(exc.errors.values()), 'Please enter a question.'),
         }, status=400)
 
     if document.status != Document.Status.READY:
-        return render(request, 'documents/partials/ask_error.html', {
+        return await async_render(request, 'documents/partials/ask_error.html', {
             'error': 'This document is not ready yet. Wait until processing finishes.',
         }, status=409)
 
@@ -137,7 +140,7 @@ async def ask(request, pk: int):
     )
     await conversation.asave(update_fields=['updated_at'])
 
-    return render(request, 'documents/partials/message_pair.html', {
+    return await async_render(request, 'documents/partials/message_pair.html', {
         'question': question,
         'answer': answer_text,
         'sources': sources,
@@ -151,5 +154,5 @@ async def delete_document(request, pk: int):
     document = await aget_object_or_404(Document.objects.filter(user=user), pk=pk)
     title = document.title
     await document.adelete()
-    messages.success(request, f'“{title}” was deleted.')
-    return redirect('documents:library')
+    await success_message(request, f'“{title}” was deleted.')
+    return await async_redirect('documents:library')

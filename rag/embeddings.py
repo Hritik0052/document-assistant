@@ -1,24 +1,19 @@
 from django.conf import settings
 
+from rag.client import openrouter_client
 from rag.schemas import Chunk
 
 
 async def embed_texts(texts: list[str]) -> list[list[float]]:
-    if not settings.OPENAI_CONFIGURED:
-        raise RuntimeError(
-            'OPENAI_API_KEY is not set. Add it to your .env to generate embeddings.'
-        )
-
-    from openai import AsyncOpenAI
-
-    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    client = openrouter_client()
     vectors: list[list[float]] = []
-    batch_size = 64
+    batch_size = 16
     for offset in range(0, len(texts), batch_size):
         batch = texts[offset:offset + batch_size]
         response = await client.embeddings.create(
-            model=settings.OPENAI_EMBEDDING_MODEL,
+            model=settings.OPENROUTER_EMBEDDING_MODEL,
             input=batch,
+            encoding_format='float',
         )
         ordered = sorted(response.data, key=lambda item: item.index)
         vectors.extend(item.embedding for item in ordered)

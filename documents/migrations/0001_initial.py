@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                 ('chunk_index', models.PositiveIntegerField()),
                 ('content', models.TextField()),
                 ('token_count', models.PositiveIntegerField(default=0)),
-                ('embedding', documents.fields.EmbeddingField(blank=True, dimensions=1536, null=True)),
+                ('embedding', documents.fields.EmbeddingField(blank=True, dimensions=2048, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('document', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chunks', to='documents.document')),

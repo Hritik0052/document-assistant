@@ -9,10 +9,10 @@
       <h1 class="font-display text-4xl">Library</h1>
       <p class="text-muted mt-1">Upload a PDF, Word, or text file, then ask questions about it.</p>
     </div>
-    {% if not openai_configured or not postgres_configured %}
+    {% if not llm_configured or not postgres_configured %}
       <p class="text-xs text-muted max-w-xs">
         {% if not postgres_configured %}Neon is not connected yet. Using local SQLite until `DATABASE_URL` is set.{% endif %}
-        {% if not openai_configured %} OpenAI key missing — files will extract, then wait on embeddings.{% endif %}
+        {% if not llm_configured %} OpenRouter key missing — files will extract, then wait on embeddings.{% endif %}
       </p>
     {% endif %}
   </div>

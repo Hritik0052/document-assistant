@@ -1,14 +1,27 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+FREE_CHAT_ROUTER = 'openrouter/free'
+
+
+def strip_env(value):
+    if isinstance(value, str):
+        return value.strip().strip("'").strip('"')
+    return value
+
+
+def is_free_openrouter_model(model: str) -> bool:
+    name = model.strip()
+    return name == FREE_CHAT_ROUTER or name.endswith(':free')
+
 
 class AppSettings(BaseSettings):
-    """Runtime config from the environment. Fill `.env` before Neon / OpenAI phases."""
+    """Runtime config from the environment."""
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / '.env',
@@ -27,9 +40,23 @@ class AppSettings(BaseSettings):
 
     database_url: str | None = Field(default=None, alias='DATABASE_URL')
 
-    openai_api_key: str = Field(default='', alias='OPENAI_API_KEY')
-    openai_embedding_model: str = Field(default='text-embedding-3-small', alias='OPENAI_EMBEDDING_MODEL')
-    openai_chat_model: str = Field(default='gpt-4o-mini', alias='OPENAI_CHAT_MODEL')
+    openrouter_api_key: str = Field(
+        default='',
+        validation_alias=AliasChoices('OPENROUTER_API_KEY', 'OPEN_ROUTER_API_KEY'),
+    )
+    openrouter_base_url: str = Field(
+        default='https://openrouter.ai/api/v1',
+        alias='OPENROUTER_BASE_URL',
+    )
+    openrouter_chat_model: str = Field(
+        default=FREE_CHAT_ROUTER,
+        alias='OPENROUTER_CHAT_MODEL',
+    )
+    openrouter_embedding_model: str = Field(
+        default='nvidia/nemotron-3-embed-1b:free',
+        alias='OPENROUTER_EMBEDDING_MODEL',
+    )
+    embedding_dimensions: int = Field(default=2048, alias='EMBEDDING_DIMENSIONS')
 
     rag_chunk_tokens: int = Field(default=700, alias='RAG_CHUNK_TOKENS')
     rag_chunk_overlap: float = Field(default=0.15, alias='RAG_CHUNK_OVERLAP')
@@ -41,9 +68,32 @@ class AppSettings(BaseSettings):
 
     @field_validator('database_url', mode='before')
     @classmethod
-    def empty_url_to_none(cls, value):
-        if isinstance(value, str) and not value.strip():
+    def clean_database_url(cls, value):
+        cleaned = strip_env(value)
+        if not cleaned:
             return None
+        return cleaned
+
+    @field_validator(
+        'openrouter_api_key',
+        'openrouter_base_url',
+        'openrouter_chat_model',
+        'openrouter_embedding_model',
+        'secret_key',
+        'allowed_hosts',
+        mode='before',
+    )
+    @classmethod
+    def clean_strings(cls, value):
+        return strip_env(value) if value is not None else value
+
+    @field_validator('openrouter_chat_model', 'openrouter_embedding_model')
+    @classmethod
+    def require_free_models(cls, value: str) -> str:
+        if not is_free_openrouter_model(value):
+            raise ValueError(
+                f'{value} is not a free OpenRouter model. Use a slug ending in :free or openrouter/free.'
+            )
         return value
 
     @property
@@ -56,8 +106,8 @@ class AppSettings(BaseSettings):
         return url.startswith('postgres')
 
     @property
-    def openai_configured(self) -> bool:
-        return bool(self.openai_api_key.strip())
+    def llm_configured(self) -> bool:
+        return bool(self.openrouter_api_key.strip())
 
 
 @lru_cache

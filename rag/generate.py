@@ -1,5 +1,6 @@
 from django.conf import settings
 
+from rag.client import openrouter_client
 from rag.schemas import AnswerResult, RetrievedChunk
 
 SYSTEM_PROMPT = (
@@ -16,17 +17,12 @@ async def generate_answer(question: str, chunks: list[RetrievedChunk]) -> Answer
             sources=[],
         )
 
-    if not settings.OPENAI_CONFIGURED:
-        raise RuntimeError('OPENAI_API_KEY is not set. Add it to your .env to generate answers.')
-
-    from openai import AsyncOpenAI
-
     context = '\n\n'.join(
         f'[Chunk {chunk.chunk_index}]\n{chunk.content}' for chunk in chunks
     )
-    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    client = openrouter_client()
     response = await client.chat.completions.create(
-        model=settings.OPENAI_CHAT_MODEL,
+        model=settings.OPENROUTER_CHAT_MODEL,
         temperature=0.1,
         messages=[
             {'role': 'system', 'content': SYSTEM_PROMPT},
