@@ -1,0 +1,14 @@
+from functools import wraps
+
+from django.shortcuts import redirect
+
+
+def async_login_required(view):
+    @wraps(view)
+    async def wrapper(request, *args, **kwargs):
+        user = await request.auser()
+        if not user.is_authenticated:
+            return redirect('accounts:login')
+        return await view(request, *args, **kwargs)
+
+    return wrapper
