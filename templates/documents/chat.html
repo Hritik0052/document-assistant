@@ -1,0 +1,64 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}{{ document.title }} · PaperQ{% endblock %}
+
+{% block content %}
+<div class="h-[calc(100vh-0px)] flex flex-col">
+  <header class="border-b border-line bg-surface px-6 py-4 flex flex-wrap items-center gap-3 justify-between">
+    <div>
+      <a href="{% url 'documents:library' %}" class="text-xs text-muted hover:text-accent">← Library</a>
+      <h1 class="font-display text-2xl">{{ document.title }}</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      {% include "documents/partials/status_badge.html" %}
+      {% if document.status == 'failed' and document.error_message %}
+        <p class="text-xs text-danger max-w-sm">{{ document.error_message }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <div id="empty-hint" class="{% if chat_messages %}hidden {% endif %}px-6 pt-6">
+    <div class="max-w-xl">
+      {% include "components/empty_state.html" with title="Ask this document" body="Questions are answered only from the file you uploaded. If the answer is not in the file, the assistant will say it does not know." %}
+    </div>
+  </div>
+  <div id="message-list" class="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+    {% for message in chat_messages %}
+      {% include "documents/partials/chat_message.html" with message=message %}
+    {% endfor %}
+  </div>
+
+  <div class="border-t border-line bg-surface px-6 py-4">
+    <div id="ask-error"></div>
+    {% if document.status == 'ready' %}
+      <form
+        method="post"
+        action="{% url 'documents:ask' document.pk %}"
+        hx-post="{% url 'documents:ask' document.pk %}"
+        hx-target="#message-list"
+        hx-target-error="#ask-error"
+        hx-swap="beforeend"
+        hx-indicator="#ask-loader"
+        hx-on::after-request="if (event.detail.successful) { this.reset(); document.getElementById('empty-hint')?.classList.add('hidden'); }"
+        class="flex items-end gap-3"
+      >
+        {% csrf_token %}
+        <label class="flex-1">
+          <span class="sr-only">Question</span>
+          <textarea name="question" rows="2" required minlength="3" placeholder="Ask something that is in this file…"
+            class="w-full resize-none rounded-xl border border-line bg-surface2 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent"></textarea>
+        </label>
+        <div class="flex flex-col items-end gap-2">
+          {% include "components/loader.html" with id="ask-loader" label="Thinking…" %}
+          {% include "components/button.html" with label="Ask" extra_class="" %}
+        </div>
+      </form>
+    {% else %}
+      <div class="flex items-center gap-3 text-sm text-muted">
+        {% include "components/loader.html" with label="Processing document…" always=True %}
+        <span>You can ask once this file is ready.</span>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "layouts/auth.html" %}
+
+{% block title %}Sign in · PaperQ{% endblock %}
+
+{% block content %}
+<div class="rounded-2xl border border-line bg-surface shadow-paper p-6">
+  <h1 class="font-display text-2xl">Sign in</h1>
+  <p class="text-sm text-muted mt-1">Use your PaperQ account to ask your files.</p>
+
+  {% include "components/alert.html" with error=errors.form %}
+
+  <form method="post" class="mt-6 space-y-4">
+    {% csrf_token %}
+    {% include "components/input.html" with name="username" label="Username" value=form_data.username error=errors.username autocomplete="username" %}
+    {% include "components/input.html" with name="password" label="Password" type="password" error=errors.password autocomplete="current-password" %}
+    {% include "components/button.html" with label="Continue" extra_class="w-full" %}
+  </form>
+
+  <p class="mt-5 text-sm text-muted text-center">
+    New here?
+    <a href="{% url 'accounts:register' %}" class="font-semibold text-accent">Create an account</a>
+  </p>
+</div>
+{% endblock %}

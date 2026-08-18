@@ -1,0 +1,24 @@
+{% extends "layouts/auth.html" %}
+
+{% block title %}Create account · PaperQ{% endblock %}
+
+{% block content %}
+<div class="rounded-2xl border border-line bg-surface shadow-paper p-6">
+  <h1 class="font-display text-2xl">Create account</h1>
+  <p class="text-sm text-muted mt-1">Upload files later. Start with a name and password.</p>
+
+  <form method="post" class="mt-6 space-y-4">
+    {% csrf_token %}
+    {% include "components/input.html" with name="username" label="Username" value=form_data.username error=errors.username autocomplete="username" %}
+    {% include "components/input.html" with name="email" label="Email" type="email" value=form_data.email error=errors.email autocomplete="email" %}
+    {% include "components/input.html" with name="password" label="Password" type="password" error=errors.password autocomplete="new-password" %}
+    {% include "components/input.html" with name="password_confirm" label="Confirm password" type="password" error=errors.password_confirm autocomplete="new-password" %}
+    {% include "components/button.html" with label="Create account" extra_class="w-full" %}
+  </form>
+
+  <p class="mt-5 text-sm text-muted text-center">
+    Already have an account?
+    <a href="{% url 'accounts:login' %}" class="font-semibold text-accent">Sign in</a>
+  </p>
+</div>
+{% endblock %}

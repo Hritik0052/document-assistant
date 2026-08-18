@@ -1,0 +1,20 @@
+<div class="flex justify-end">
+  <div class="max-w-2xl rounded-2xl px-4 py-3 text-sm bg-accent text-onaccent">
+    {{ question }}
+  </div>
+</div>
+<div class="flex justify-start">
+  <div class="max-w-2xl rounded-2xl px-4 py-3 text-sm leading-relaxed border border-line bg-surface">
+    {{ answer|linebreaksbr }}
+    {% if sources %}
+      <details class="mt-3 text-xs text-muted">
+        <summary class="cursor-pointer">Sources</summary>
+        <ul class="mt-2 space-y-1">
+          {% for source in sources %}
+            <li>Chunk {{ source.chunk_index }} · {{ source.similarity|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  </div>
+</div>

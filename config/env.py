@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,6 +15,7 @@ class AppSettings(BaseSettings):
         env_file_encoding='utf-8',
         extra='ignore',
         case_sensitive=False,
+        populate_by_name=True,
     )
 
     secret_key: str = Field(
@@ -37,6 +38,13 @@ class AppSettings(BaseSettings):
 
     max_upload_mb: int = Field(default=10, alias='MAX_UPLOAD_MB')
     default_theme: str = Field(default='light', alias='DEFAULT_THEME')
+
+    @field_validator('database_url', mode='before')
+    @classmethod
+    def empty_url_to_none(cls, value):
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @property
     def allowed_hosts_list(self) -> list[str]:

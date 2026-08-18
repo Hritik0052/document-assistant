@@ -1,0 +1,15 @@
+<form method="post" action="{% url 'core:set-theme' %}" class="flex items-center gap-2">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.path }}">
+  <label class="sr-only" for="theme-select">Theme</label>
+  <select
+    id="theme-select"
+    name="theme"
+    onchange="this.form.submit()"
+    class="rounded-xl border border-line bg-surface px-3 py-2 text-sm"
+  >
+    {% for theme in theme_choices %}
+      <option value="{{ theme }}" {% if theme == current_theme %}selected{% endif %}>{{ theme|title }}</option>
+    {% endfor %}
+  </select>
+</form>

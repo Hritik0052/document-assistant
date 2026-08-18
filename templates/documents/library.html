@@ -1,0 +1,50 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Library · PaperQ{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+    <div>
+      <h1 class="font-display text-4xl">Library</h1>
+      <p class="text-muted mt-1">Upload a PDF, Word, or text file, then ask questions about it.</p>
+    </div>
+    {% if not openai_configured or not postgres_configured %}
+      <p class="text-xs text-muted max-w-xs">
+        {% if not postgres_configured %}Neon is not connected yet. Using local SQLite until `DATABASE_URL` is set.{% endif %}
+        {% if not openai_configured %} OpenAI key missing — files will extract, then wait on embeddings.{% endif %}
+      </p>
+    {% endif %}
+  </div>
+
+  <form method="post" action="{% url 'documents:upload' %}" enctype="multipart/form-data" class="mb-10" onsubmit="document.getElementById('upload-loader').classList.remove('hidden'); document.getElementById('upload-loader').classList.add('inline-flex');">
+    {% csrf_token %}
+    <input data-dropzone-input class="hidden" type="file" name="file" accept=".pdf,.txt,.docx" required>
+    {% include "components/dropzone.html" %}
+    <div class="mt-4 flex items-center gap-3">
+      {% include "components/button.html" with label="Upload and process" extra_class="" %}
+      {% include "components/loader.html" with label="Uploading…" id="upload-loader" extra_class="hidden" always=True %}
+    </div>
+  </form>
+
+  {% if documents %}
+    <div class="space-y-3">
+      {% for document in documents %}
+        <div class="rounded-2xl border border-line bg-surface px-5 py-4 flex items-center gap-4">
+          <div class="flex-1 min-w-0">
+            <a href="{% url 'documents:chat' document.pk %}" class="font-semibold truncate block hover:text-accent">{{ document.title }}</a>
+            <p class="text-xs text-muted mt-1">{{ document.original_name }} · {{ document.get_file_type_display }}</p>
+          </div>
+          {% include "documents/partials/status_badge.html" %}
+          <form method="post" action="{% url 'documents:delete' document.pk %}" onsubmit="return confirm('Delete this document?');">
+            {% csrf_token %}
+            {% include "components/button.html" with label="Delete" variant="ghost" extra_class="text-danger" %}
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    {% include "components/empty_state.html" with title="No documents yet" body="Drop a file above. After it is ready, open it and start asking questions." %}
+  {% endif %}
+</div>
+{% endblock %}

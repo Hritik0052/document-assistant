@@ -1,0 +1,9 @@
+<div class="rounded-2xl border border-line bg-surface shadow-paper {{ extra_class }}">
+  {% if title %}
+  <div class="px-5 py-4 border-b border-line">
+    <h2 class="font-display text-xl">{{ title }}</h2>
+    {% if subtitle %}<p class="text-sm text-muted mt-1">{{ subtitle }}</p>{% endif %}
+  </div>
+  {% endif %}
+  <div class="p-5">{{ slot }}</div>
+</div>

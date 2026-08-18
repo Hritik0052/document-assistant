@@ -1,0 +1,18 @@
+<label class="block {{ extra_class }}">
+  {% if label %}
+  <span class="mb-1.5 block text-sm font-medium">{{ label }}</span>
+  {% endif %}
+  <input
+    type="{{ type|default:'text' }}"
+    name="{{ name }}"
+    value="{{ value|default:'' }}"
+    placeholder="{{ placeholder|default:'' }}"
+    class="w-full rounded-xl border bg-surface2 px-3 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-accent
+      {% if error %}border-danger{% else %}border-line{% endif %}"
+    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+    {{ attrs|default:'' }}
+  >
+  {% if error %}
+  <span class="mt-1 block text-xs text-danger">{{ error }}</span>
+  {% endif %}
+</label>

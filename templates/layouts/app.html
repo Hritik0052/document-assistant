@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="min-h-screen grid lg:grid-cols-[18rem_1fr]">
+  {% include "components/sidebar.html" %}
+  <main class="min-h-screen">
+    <div class="lg:hidden flex items-center justify-between px-4 py-3 border-b border-line bg-surface">
+      <p class="font-display text-lg">PaperQ</p>
+      {% include "components/theme_switcher.html" %}
+    </div>
+    {% include "components/toast_stack.html" %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

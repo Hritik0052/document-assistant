@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ current_theme }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PaperQ{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Source Sans 3"', 'ui-sans-serif', 'system-ui'],
+            display: ['"Fraunces"', 'Georgia', 'serif'],
+          },
+          colors: {
+            bg: 'rgb(var(--bg) / <alpha-value>)',
+            mutedbg: 'rgb(var(--bg-muted) / <alpha-value>)',
+            surface: 'rgb(var(--surface) / <alpha-value>)',
+            surface2: 'rgb(var(--surface-2) / <alpha-value>)',
+            ink: 'rgb(var(--text) / <alpha-value>)',
+            muted: 'rgb(var(--muted) / <alpha-value>)',
+            line: 'rgb(var(--border) / <alpha-value>)',
+            accent: 'rgb(var(--accent) / <alpha-value>)',
+            onaccent: 'rgb(var(--accent-text) / <alpha-value>)',
+            soft: 'rgb(var(--accent-soft) / <alpha-value>)',
+            danger: 'rgb(var(--danger) / <alpha-value>)',
+            success: 'rgb(var(--success) / <alpha-value>)',
+          },
+          boxShadow: {
+            paper: '0 20px 50px -24px rgb(var(--shadow) / 0.45)',
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/themes.css' %}">
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-bg text-ink font-sans antialiased">
+  {% csrf_token %}
+  {% block body %}{% endblock %}
+</body>
+</html>

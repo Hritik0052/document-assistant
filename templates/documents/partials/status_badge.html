@@ -1,0 +1,15 @@
+{% if document.status == 'ready' %}
+  {% include "components/badge.html" with label="Ready" tone="success" %}
+{% elif document.status == 'failed' %}
+  {% include "components/badge.html" with label="Failed" tone="danger" %}
+{% elif document.status == 'processing' or document.status == 'pending' %}
+  <span
+    hx-get="{% url 'documents:status' document.pk %}"
+    hx-trigger="every 2s"
+    hx-swap="outerHTML"
+  >
+    {% include "components/badge.html" with label="Processing" tone="warn" %}
+  </span>
+{% else %}
+  {% include "components/badge.html" with label=document.status %}
+{% endif %}

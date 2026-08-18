@@ -1,0 +1,7 @@
+<span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold
+  {% if tone == 'success' %}bg-success/15 text-success
+  {% elif tone == 'danger' %}bg-danger/15 text-danger
+  {% elif tone == 'warn' %}bg-soft text-accent
+  {% else %}bg-mutedbg text-muted{% endif %}">
+  {{ label }}
+</span>

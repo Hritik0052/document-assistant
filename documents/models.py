@@ -49,7 +49,9 @@ class DocumentChunk(models.Model):
 
     class Meta:
         ordering = ['chunk_index']
-        unique_together = [('document', 'chunk_index')]
+        constraints = [
+            models.UniqueConstraint(fields=['document', 'chunk_index'], name='uniq_document_chunk_index'),
+        ]
 
     def __str__(self):
         return f'{self.document_id} #{self.chunk_index}'
@@ -67,6 +69,9 @@ class Conversation(models.Model):
 
     class Meta:
         ordering = ['-updated_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'document'], name='uniq_user_document_conversation'),
+        ]
 
     def __str__(self):
         return f'Conversation {self.pk} · {self.document.title}'

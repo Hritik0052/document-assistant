@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center px-4 py-10">
+  <div class="absolute top-5 right-5">
+    {% include "components/theme_switcher.html" %}
+  </div>
+  <div class="w-full max-w-md">
+    <div class="mb-8 text-center">
+      <p class="font-display text-4xl">PaperQ</p>
+      <p class="mt-2 text-muted">Ask your documents, not the internet.</p>
+    </div>
+    {% include "components/toast_stack.html" %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

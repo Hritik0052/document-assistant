@@ -11,7 +11,9 @@ if _is_postgres():
     from pgvector.django import VectorField as PgVectorField
 
     class EmbeddingField(PgVectorField):
-        pass
+        def deconstruct(self):
+            name, path, args, kwargs = super().deconstruct()
+            return name, 'documents.fields.EmbeddingField', args, kwargs
 else:
     class EmbeddingField(models.JSONField):
         """SQLite-safe stand-in until Neon/pgvector is connected."""
@@ -20,3 +22,8 @@ else:
             kwargs.setdefault('null', True)
             kwargs.setdefault('blank', True)
             super().__init__(**kwargs)
+
+        def deconstruct(self):
+            name, path, args, kwargs = super().deconstruct()
+            kwargs.pop('dimensions', None)
+            return name, 'documents.fields.EmbeddingField', args, kwargs

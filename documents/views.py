@@ -1,12 +1,14 @@
-from django.shortcuts import aget_object_or_404, redirect, render
-from django.template.loader import render_to_string
-from django.http import HttpResponse
-from django.views.decorators.http import require_http_methods
+import threading
 from pathlib import Path
 
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.contrib import messages
+from django.db import connections
+from django.http import HttpResponse
+from django.shortcuts import aget_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_http_methods
 
 from core.auth import async_login_required
 from core.pydantic import FormError, parse_form
@@ -21,7 +23,10 @@ def _file_type_for(name: str) -> str | None:
 
 
 def _start_ingest(document_id: int) -> None:
-    async_to_sync(ingest_document)(document_id)
+    try:
+        async_to_sync(ingest_document)(document_id)
+    finally:
+        connections.close_all()
 
 
 @async_login_required
@@ -59,7 +64,7 @@ async def upload(request):
         file_type=file_type,
         status=Document.Status.PENDING,
     )
-    await sync_to_async(_start_ingest, thread_sensitive=False)(document.pk)
+    threading.Thread(target=_start_ingest, args=(document.pk,), daemon=True).start()
     messages.success(request, f'“{title}” is being processed. You can ask questions once it is ready.')
     return redirect('documents:chat', pk=document.pk)
 
@@ -75,7 +80,7 @@ async def chat(request, pk: int):
         'document': document,
         'documents': docs,
         'conversation': conversation,
-        'messages': history,
+        'chat_messages': history,
     })
 
 
@@ -84,7 +89,10 @@ async def document_status(request, pk: int):
     user = await request.auser()
     document = await aget_object_or_404(Document.objects.filter(user=user), pk=pk)
     html = render_to_string('documents/partials/status_badge.html', {'document': document}, request=request)
-    return HttpResponse(html)
+    response = HttpResponse(html)
+    if document.status in {Document.Status.READY, Document.Status.FAILED}:
+        response['HX-Refresh'] = 'true'
+    return response
 
 
 @async_login_required
@@ -127,7 +135,6 @@ async def ask(request, pk: int):
         role=Message.Role.ASSISTANT,
         content=answer_text,
     )
-    conversation.updated_at = conversation.updated_at
     await conversation.asave(update_fields=['updated_at'])
 
     return render(request, 'documents/partials/message_pair.html', {
