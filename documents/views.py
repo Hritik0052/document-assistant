@@ -1,7 +1,7 @@
+import logging
 import threading
 from pathlib import Path
 
-from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.db import connections
 from django.http import HttpResponse
@@ -13,7 +13,10 @@ from core.http import async_redirect, async_render, async_render_to_string, erro
 from core.pydantic import FormError, parse_form
 from documents.models import Conversation, Document, Message
 from documents.schemas import AskSchema
-from rag.pipeline import answer_question, ingest_document
+from rag.ingest_sync import ingest_document_sync
+from rag.pipeline import answer_question
+
+logger = logging.getLogger(__name__)
 
 
 def _file_type_for(name: str) -> str | None:
@@ -23,7 +26,9 @@ def _file_type_for(name: str) -> str | None:
 
 def _start_ingest(document_id: int) -> None:
     try:
-        async_to_sync(ingest_document)(document_id)
+        ingest_document_sync(document_id)
+    except Exception:
+        logger.exception('Ingest failed for document %s', document_id)
     finally:
         connections.close_all()
 

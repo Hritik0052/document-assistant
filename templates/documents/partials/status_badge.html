@@ -7,6 +7,7 @@
     hx-get="{% url 'documents:status' document.pk %}"
     hx-trigger="every 2s"
     hx-swap="outerHTML"
+    hx-sync="this:replace"
   >
     {% include "components/badge.html" with label="Processing" tone="warn" %}
   </span>

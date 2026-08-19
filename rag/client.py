@@ -10,6 +10,7 @@ def openrouter_client() -> AsyncOpenAI:
     return AsyncOpenAI(
         api_key=settings.OPENROUTER_API_KEY,
         base_url=settings.OPENROUTER_BASE_URL,
+        timeout=60.0,
         default_headers={
             'HTTP-Referer': 'http://localhost:8000',
             'X-Title': 'RAG Document Q&A',

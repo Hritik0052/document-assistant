@@ -123,3 +123,17 @@ THEME_CHOICES = ('light', 'dark', 'ocean', 'forest', 'sunset')
 
 ALLOWED_UPLOAD_EXTENSIONS = {'.pdf', '.txt', '.docx'}
 EMBEDDING_DIMENSIONS = app_settings.embedding_dimensions
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'rag': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'documents': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+}

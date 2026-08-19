@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from documents.models import Document, DocumentChunk
@@ -8,12 +9,15 @@ from rag.loaders import load_file
 from rag.retrieve import retrieve_chunks
 from rag.schemas import AnswerResult
 
+logger = logging.getLogger(__name__)
+
 
 async def ingest_document(document_id: int) -> None:
     document = await Document.objects.aget(pk=document_id)
     document.status = Document.Status.PROCESSING
     document.error_message = ''
     await document.asave(update_fields=['status', 'error_message', 'updated_at'])
+    logger.info('Ingest started for "%s" (%s)', document.title, document.original_name)
 
     try:
         extracted = await load_file(Path(document.file.path))
@@ -25,6 +29,7 @@ async def ingest_document(document_id: int) -> None:
         if not chunks:
             raise ValueError('The document produced no chunks.')
 
+        logger.info('Extracted %s chunks from "%s"', len(chunks), document.title)
         await DocumentChunk.objects.filter(document=document).adelete()
         await DocumentChunk.objects.abulk_create([
             DocumentChunk(
@@ -40,13 +45,19 @@ async def ingest_document(document_id: int) -> None:
 
         stored = [chunk async for chunk in DocumentChunk.objects.filter(document=document).order_by('chunk_index')]
         vectors = await embed_texts([chunk.content for chunk in stored])
-        for chunk, vector in zip(stored, vectors):
-            chunk.embedding = vector
-            await chunk.asave(update_fields=['embedding', 'updated_at'])
+        await DocumentChunk.objects.abulk_update(
+            [
+                DocumentChunk(pk=chunk.pk, embedding=vector)
+                for chunk, vector in zip(stored, vectors)
+            ],
+            ['embedding'],
+        )
 
         document.status = Document.Status.READY
         await document.asave(update_fields=['status', 'updated_at'])
+        logger.info('Ingest finished for "%s"', document.title)
     except Exception as exc:
+        logger.exception('Ingest error for document %s', document_id)
         document.status = Document.Status.FAILED
         document.error_message = str(exc)
         await document.asave(update_fields=['status', 'error_message', 'updated_at'])
